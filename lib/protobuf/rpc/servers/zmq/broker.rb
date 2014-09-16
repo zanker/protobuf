@@ -135,7 +135,7 @@ module Protobuf
         end
 
         def should_queue_request?
-          @idle_workers.size > 0 || work_queue.size < 10
+          work_queue.size < 10
         end
 
         def teardown
