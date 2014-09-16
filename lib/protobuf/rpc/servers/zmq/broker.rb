@@ -1,4 +1,3 @@
-require 'queue'
 require 'thread'
 
 module Protobuf
