@@ -32,7 +32,7 @@ module Protobuf
             break if rc == 0 && !running?
             # Something went wrong
             break if rc == -1
-            check_and_process_frontend
+            process_frontend if rc > 0
 
             response_queue.length.times do
               write_to_frontend(response_queue.shift)
@@ -52,8 +52,8 @@ module Protobuf
             break if rc == 0 && !running?
             # Something went wrong
             break if rc == -1
+            process_backend if rc > 0
 
-            check_and_process_backend
             @idle_workers.each do |idle_worker|
               break if work_queue.empty?
               write_to_backend([idle_worker, ::Protobuf::Rpc::Zmq::EMPTY_STRING].concat(work_queue.shift))
@@ -68,16 +68,6 @@ module Protobuf
         end
 
         private
-
-        def check_and_process_backend
-          readables_include_backend = @backend_poller.readables.include?(@backend_socket)
-          process_backend if readables_include_backend
-        end
-
-        def check_and_process_frontend
-          readables_include_frontend = @frontend_poller.readables.include?(@frontend_socket)
-          process_frontend if readables_include_frontend
-        end
 
         def init_backend_socket
           @backend_socket = @zmq_context.socket(ZMQ::ROUTER)
