@@ -14,7 +14,6 @@ module Protobuf
           init_zmq_context
           init_backend_socket
           init_frontend_socket
-          init_poller
 
           @idle_workers = []
           @work_queue = ::Queue.new
@@ -24,9 +23,19 @@ module Protobuf
           raise
         end
 
+        def init_backend_poller
+          @backend_poller = ZMQ::Poller.new
+          @backend_poller.register_readable(@backend_socket)
+        end
+
+        def init_frontend_poller
+          @frontend_poller = ZMQ::Poller.new
+          @frontend_poller.register_readable(@frontend_socket)
+        end
+
         def run_frontend
           loop do
-            rc = @frontend_poller.poll(5)
+            rc = @frontend_poller.poll(75)
 
             # The server was shutdown and no requests are pending
             break if rc == 0 && !running?
@@ -34,7 +43,8 @@ module Protobuf
             break if rc == -1
             process_frontend if rc > 0
 
-            response_queue.length.times do
+            response_count = response_queue.size
+            response_count.times do
               write_to_frontend(response_queue.shift)
             end
           end
@@ -42,11 +52,14 @@ module Protobuf
 
         def run
           Thread.new(self) do |broker|
+            broker.init_frontend_poller
             broker.run_frontend
           end
 
+          init_backend_poller
+
           loop do
-            rc = @backend_poller.poll(5)
+            rc = @backend_poller.poll(75)
 
             # The server was shutdown and no requests are pending
             break if rc == 0 && !running?
@@ -77,14 +90,6 @@ module Protobuf
         def init_frontend_socket
           @frontend_socket = @zmq_context.socket(ZMQ::ROUTER)
           zmq_error_check(@frontend_socket.bind(@server.frontend_uri))
-        end
-
-        def init_poller
-          @frontend_poller = ZMQ::Poller.new
-          @frontend_poller.register_readable(@frontend_socket)
-
-          @backend_poller = ZMQ::Poller.new
-          @backend_poller.register_readable(@backend_socket)
         end
 
         def init_zmq_context
