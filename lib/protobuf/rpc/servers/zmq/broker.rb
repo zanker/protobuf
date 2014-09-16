@@ -70,12 +70,12 @@ module Protobuf
         private
 
         def check_and_process_backend
-          readables_include_backend = @poller.readables.include?(@backend_socket)
+          readables_include_backend = @backend_poller.readables.include?(@backend_socket)
           process_backend if readables_include_backend
         end
 
         def check_and_process_frontend
-          readables_include_frontend = @poller.readables.include?(@frontend_socket)
+          readables_include_frontend = @frontend_poller.readables.include?(@frontend_socket)
           process_frontend if readables_include_frontend
         end
 
