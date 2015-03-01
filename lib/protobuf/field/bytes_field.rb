@@ -60,7 +60,7 @@ module Protobuf
             begin
               val = "#{val}" if val.is_a?(Symbol)
 
-              if val.nil?
+              if val.nil? || (val.respond_to?(:empty?) && val.empty?)
                 @values.delete(field.name)
               elsif field.acceptable?(val)
                 @values[field.name] = val.dup

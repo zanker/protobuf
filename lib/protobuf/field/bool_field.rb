@@ -20,6 +20,10 @@ module Protobuf
         [true, false].include?(val)
       end
 
+      def coerce!(val)
+        val
+      end
+
       def decode(value)
         value == 1
       end

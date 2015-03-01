@@ -7,7 +7,6 @@ module Protobuf
       ##
       # Constants
       #
-
       INT32_MAX  =  2**31 - 1
       INT32_MIN  = -2**31
       INT64_MAX  =  2**63 - 1
@@ -37,9 +36,16 @@ module Protobuf
       #
 
       def acceptable?(val)
-        (val > self.class.min || val < self.class.max)
+        return false unless val.respond_to?(:to_i)
+
+        coerced_value = coerce!(val)
+        coerced_value >= self.class.min && coerced_value <= self.class.max
       rescue
         false
+      end
+
+      def coerce!(val)
+        Integer(val)
       end
 
       def decode(value)
